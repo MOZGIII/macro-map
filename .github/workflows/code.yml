@@ -1,0 +1,69 @@
+name: code
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/master' }}
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  CARGO_INCREMENTAL: "0"
+  RUSTDOCFLAGS: "-D warnings"
+
+jobs:
+
+  test:
+    strategy:
+      matrix:
+        rust:
+          - stable
+          - beta
+          - nightly
+        mode:
+          - name: test
+            cargoCommand: test
+          - name: clippy
+            cargoCommand: clippy
+            cargoArgs: -- -D warnings
+          - name: doc
+            cargoCommand: doc
+      fail-fast: false
+    name: ${{ matrix.rust }} / ${{ matrix.mode.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    permissions:
+      contents: read
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        timeout-minutes: 5
+
+      - name: Install rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: ${{ matrix.rust }}
+        timeout-minutes: 10
+
+      - name: Print build environment info
+        run: |
+          set -x
+          cargo --version
+          cargo clippy --version
+          env
+        timeout-minutes: 3
+
+      - name: Run cargo ${{ matrix.mode.cargoCommand }}
+        uses: actions-rs/cargo@v1
+        with:
+          command: ${{ matrix.mode.cargoCommand }}
+          args: ${{ matrix.mode.cargoArgs }}
+        timeout-minutes: 10
