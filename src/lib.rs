@@ -1,5 +1,5 @@
 //! A small toolbelt of macros that implement the [`Option::ok_or_else`] and
-//! [`Result::map_err`] with macros instead of functions taking callbacks.
+//! [`Result::map_err`] with macros instead of functions taking closures.
 //!
 //! This reduces the boilerplate when you can't use the abovementioned functions
 //! because the error condition handling logic you need requires you that
